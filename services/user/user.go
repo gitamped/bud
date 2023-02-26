@@ -43,7 +43,7 @@ func (us UserServicer) CreateUserHandler(r server.GenericRequest, b []byte) (any
 func (UserServicer) CreateUser(req CreateUserRequest, gr server.GenericRequest) CreateUserResponse {
 	// TODO call db layer
 	u := CreateUserResponse{}
-	u.Name = "Gopher"
+	u.Name = "John Doe"
 	return u
 }
 
