@@ -12,7 +12,7 @@ type UserService interface {
 	// UpdateUser updates a user
 	UpdateUser(UpdateUserRequest, server.GenericRequest) UpdateUserResponse
 	// DeleteUser deletes a user
-	DeleteUser(DeleteUserRequest, server.Server) DeleteUserResponse
+	DeleteUser(DeleteUserRequest, server.GenericRequest) DeleteUserResponse
 	// QueryUser retrieves a list of existing users
 	QueryUser(QueryUserRequest, server.GenericRequest) QueryUserResponse
 	// QueryByID gets the specified user by id
@@ -56,7 +56,7 @@ func (UserServicer) QueryUser(QueryUserRequest, server.GenericRequest) QueryUser
 }
 
 // DeleteUser implements UserRpcService
-func (UserServicer) DeleteUser(DeleteUserRequest, server.Server) DeleteUserResponse {
+func (UserServicer) DeleteUser(DeleteUserRequest, server.GenericRequest) DeleteUserResponse {
 	panic("unimplemented")
 }
 
