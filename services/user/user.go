@@ -17,6 +17,8 @@ type UserService interface {
 	QueryUser(QueryUserRequest, server.GenericRequest) QueryUserResponse
 	// QueryByID gets the specified user by id
 	QueryUserByID(QueryUserByIDRequest, server.GenericRequest) QueryUserByIDResponse
+	// QueryByEmail gets the specified user by email
+	QueryUserByEmail(QueryUserByEmailRequest, server.GenericRequest) QueryUserByEmailResponse
 }
 
 // Required to register endpoints with the Server
@@ -28,6 +30,11 @@ type UserRpcService interface {
 
 // Implements interface
 type UserServicer struct{}
+
+// QueryUserByEmail implements UserRpcService
+func (UserServicer) QueryUserByEmail(QueryUserByEmailRequest, server.GenericRequest) QueryUserByEmailResponse {
+	panic("unimplemented")
+}
 
 // QueryUserByID implements UserRpcService
 func (UserServicer) QueryUserByID(QueryUserByIDRequest, server.GenericRequest) QueryUserByIDResponse {
@@ -89,3 +96,6 @@ type QueryUserResponse struct{}
 
 type QueryUserByIDRequest struct{}
 type QueryUserByIDResponse struct{}
+
+type QueryUserByEmailRequest struct{}
+type QueryUserByEmailResponse struct{}
