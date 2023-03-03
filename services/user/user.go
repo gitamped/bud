@@ -15,6 +15,8 @@ type UserService interface {
 	DeleteUser(DeleteUserRequest, server.Server) DeleteUserResponse
 	// QueryUser retrieves a list of existing users
 	QueryUser(QueryUserRequest, server.GenericRequest) QueryUserResponse
+	// QueryByID gets the specified user by id
+	QueryUserByID(QueryUserByIDRequest, server.GenericRequest) QueryUserByIDResponse
 }
 
 // Required to register endpoints with the Server
@@ -26,6 +28,11 @@ type UserRpcService interface {
 
 // Implements interface
 type UserServicer struct{}
+
+// QueryUserByID implements UserRpcService
+func (UserServicer) QueryUserByID(QueryUserByIDRequest, server.GenericRequest) QueryUserByIDResponse {
+	panic("unimplemented")
+}
 
 // QueryUser implements UserRpcService
 func (UserServicer) QueryUser(QueryUserRequest, server.GenericRequest) QueryUserResponse {
@@ -79,3 +86,6 @@ type DeleteUserResponse struct{}
 
 type QueryUserRequest struct{}
 type QueryUserResponse struct{}
+
+type QueryUserByIDRequest struct{}
+type QueryUserByIDResponse struct{}
