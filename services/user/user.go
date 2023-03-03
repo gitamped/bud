@@ -11,6 +11,8 @@ type UserService interface {
 	CreateUser(CreateUserRequest, server.GenericRequest) CreateUserResponse
 	// UpdateUser updates a user
 	UpdateUser(UpdateUserRequest, server.GenericRequest) UpdateUserResponse
+	// DeleteUser deletes a user
+	DeleteUser(DeleteUserRequest, server.Server) DeleteUserResponse
 }
 
 // Required to register endpoints with the Server
@@ -22,6 +24,11 @@ type UserRpcService interface {
 
 // Implements interface
 type UserServicer struct{}
+
+// DeleteUser implements UserRpcService
+func (UserServicer) DeleteUser(DeleteUserRequest, server.Server) DeleteUserResponse {
+	panic("unimplemented")
+}
 
 // CreateUser implements UserRpcService
 func (UserServicer) CreateUser(req CreateUserRequest, gr server.GenericRequest) CreateUserResponse {
@@ -59,3 +66,6 @@ type CreateUserResponse struct {
 
 type UpdateUserRequest struct{}
 type UpdateUserResponse struct{}
+
+type DeleteUserRequest struct{}
+type DeleteUserResponse struct{}
