@@ -1,12 +1,8 @@
 package user
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/gitamped/seed/auth"
 	"github.com/gitamped/seed/server"
-	"github.com/gitamped/seed/validate"
 )
 
 // UserService is an API for creating users for an app.
@@ -24,20 +20,6 @@ type UserRpcService interface {
 
 // Implements interface
 type UserServicer struct{}
-
-// CreateUserHandler validates input data prior to calling CreateUser
-func (us UserServicer) CreateUserHandler(r server.GenericRequest, b []byte) (any, error) {
-	var ur CreateUserRequest
-	if err := json.Unmarshal(b, &ur); err != nil {
-		return nil, fmt.Errorf("Unmarshalling data: %w", err)
-	}
-
-	if err := validate.Check(ur); err != nil {
-		return nil, fmt.Errorf("validating data: %w", err)
-	}
-
-	return us.CreateUser(ur, r), nil
-}
 
 // CreateUser implements UserRpcService
 func (UserServicer) CreateUser(req CreateUserRequest, gr server.GenericRequest) CreateUserResponse {
