@@ -9,6 +9,8 @@ import (
 type UserService interface {
 	// CreateUser create a user
 	CreateUser(CreateUserRequest, server.GenericRequest) CreateUserResponse
+	// UpdateUser updates a user
+	UpdateUser(UpdateUserRequest, server.GenericRequest) UpdateUserResponse
 }
 
 // Required to register endpoints with the Server
@@ -27,6 +29,11 @@ func (UserServicer) CreateUser(req CreateUserRequest, gr server.GenericRequest) 
 	u := CreateUserResponse{}
 	u.Name = "John Doe"
 	return u
+}
+
+// UpdateUser implements UserRpcService
+func (UserServicer) UpdateUser(UpdateUserRequest, server.GenericRequest) UpdateUserResponse {
+	panic("unimplemented")
 }
 
 // Register implements UserRpcService
@@ -49,3 +56,6 @@ type CreateUserRequest struct {
 type CreateUserResponse struct {
 	User
 }
+
+type UpdateUserRequest struct{}
+type UpdateUserResponse struct{}
