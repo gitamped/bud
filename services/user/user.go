@@ -19,6 +19,10 @@ type UserService interface {
 	QueryUserByID(QueryUserByIDRequest, server.GenericRequest) QueryUserByIDResponse
 	// QueryByEmail gets the specified user by email
 	QueryUserByEmail(QueryUserByEmailRequest, server.GenericRequest) QueryUserByEmailResponse
+	// Authenticate finds a user by their email and verifies their password. On
+	// success it returns a Claims User representing this user. The claims can be
+	// used to generate a token for future authentication.
+	Authenticate(AuthenticateRequest, server.GenericRequest) AuthenticateResponse
 }
 
 // Required to register endpoints with the Server
@@ -30,6 +34,11 @@ type UserRpcService interface {
 
 // Implements interface
 type UserServicer struct{}
+
+// Authenticate implements UserRpcService
+func (UserServicer) Authenticate(AuthenticateRequest, server.GenericRequest) AuthenticateResponse {
+	panic("unimplemented")
+}
 
 // QueryUserByEmail implements UserRpcService
 func (UserServicer) QueryUserByEmail(QueryUserByEmailRequest, server.GenericRequest) QueryUserByEmailResponse {
@@ -99,3 +108,6 @@ type QueryUserByIDResponse struct{}
 
 type QueryUserByEmailRequest struct{}
 type QueryUserByEmailResponse struct{}
+
+type AuthenticateRequest struct{}
+type AuthenticateResponse struct{}
