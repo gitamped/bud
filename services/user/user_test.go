@@ -3,6 +3,7 @@ package user_test
 import (
 	"context"
 	"fmt"
+	"net/mail"
 	"os"
 	"strings"
 	"testing"
@@ -53,11 +54,16 @@ func Test_User(t *testing.T) {
 		{
 			ctx := context.Background()
 			now := time.Date(2018, time.October, 1, 0, 0, 0, 0, time.UTC)
+			email, err := mail.ParseAddress("user@example.com")
+			if err != nil {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to parse email: %s.", dbtest.Failed, testID, err)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to parse email.", dbtest.Success, testID)
 
 			nu := user.CreateUserRequest{}
 			nu.Name = "John Doe"
-			nu.Email = "user@example.com"
-			nu.Roles = []string{auth.RoleAdmin}
+			nu.Email = *email
+			nu.Roles = []user.Role{user.RoleAdmin}
 			nu.Password = "gophers"
 			nu.PasswordConfirm = "gophers"
 

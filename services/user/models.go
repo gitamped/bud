@@ -1,39 +1,42 @@
 package user
 
 import (
+	"net/mail"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-// User represents an individual user.
+// User represents information about an individual user.
 type User struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Email        string    `json:"email"`
-	Roles        []string  `json:"roles"`
-	PasswordHash []byte    `json:"-"`
-	DateCreated  time.Time `json:"date_created"`
-	DateUpdated  time.Time `json:"date_updated"`
+	ID           uuid.UUID
+	Name         string
+	Email        mail.Address
+	Roles        []Role
+	PasswordHash []byte
+	Department   string
+	Enabled      bool
+	DateCreated  time.Time
+	DateUpdated  time.Time
 }
 
-// NewUser contains information needed to create a new User.
+// NewUser contains information needed to create a new user.
 type NewUser struct {
-	Name            string   `json:"name" validate:"required"`
-	Email           string   `json:"email" validate:"required,email"`
-	Roles           []string `json:"roles" validate:"required"`
-	Password        string   `json:"password" validate:"required"`
-	PasswordConfirm string   `json:"password_confirm" validate:"eqfield=Password"`
+	Name            string
+	Email           mail.Address
+	Roles           []Role
+	Department      string
+	Password        string
+	PasswordConfirm string
 }
 
-// UpdateUser defines what information may be provided to modify an existing
-// User. All fields are optional so clients can send just the fields they want
-// changed. It uses pointer fields so we can differentiate between a field that
-// was not provided and a field that was provided as explicitly blank. Normally
-// we do not want to use pointers to basic types but we make exceptions around
-// marshalling/unmarshalling.
+// UpdateUser contains information needed to update a user.
 type UpdateUser struct {
-	Name            *string  `json:"name"`
-	Email           *string  `json:"email" validate:"omitempty,email"`
-	Roles           []string `json:"roles"`
-	Password        *string  `json:"password"`
-	PasswordConfirm *string  `json:"password_confirm" validate:"omitempty,eqfield=Password"`
+	Name            *string
+	Email           *mail.Address
+	Roles           []Role
+	Department      *string
+	Password        *string
+	PasswordConfirm *string
+	Enabled         *bool
 }
