@@ -28,9 +28,9 @@ func NewStore(log *zap.SugaredLogger, db driver.Database) *Store {
 }
 
 // Create inserts a new user into the database.
-func (s *Store) Create(ctx context.Context, usr user.User) error {
+func (s *Store) Create(ctx context.Context, usr user.User) (user.User, error) {
 	var result dbUser
-	driver.WithReturnNew(ctx, result)
-	_, err := s.col.CreateDocument(ctx, usr)
-	return err
+	ctx = driver.WithReturnNew(ctx, &result)
+	_, err := s.col.CreateDocument(ctx, toDBUser(usr))
+	return toCoreUser(result), err
 }

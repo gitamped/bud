@@ -63,18 +63,18 @@ func Test_User(t *testing.T) {
 			t.Logf("\t%s\tTest %d:\tShould be able to parse email.", dbtest.Success, testID)
 
 			nu := user.CreateUserRequest{}
-			nu.Name = "John Doe"
-			nu.Email = *email
-			nu.Roles = []user.Role{user.RoleAdmin}
-			nu.Password = "gophers"
-			nu.PasswordConfirm = "gophers"
+			nu.NewUser.Name = "John Doe"
+			nu.NewUser.Email = *email
+			nu.NewUser.Roles = []user.Role{user.RoleAdmin}
+			nu.NewUser.Password = "gophers"
+			nu.NewUser.PasswordConfirm = "gophers"
 
 			usr := core.CreateUser(nu, server.GenericRequest{
 				Ctx:    ctx,
 				Claims: auth.Claims{},
 				Values: &values.Values{Now: now},
 			})
-			if usr.Name != "John Doe" {
+			if usr.User.Name != "John Doe" {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to create user %+v : got %+v.", dbtest.Failed, testID, nu, usr)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to create user.", dbtest.Success, testID)
