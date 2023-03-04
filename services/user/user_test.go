@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gitamped/bud/services/user"
+	"github.com/gitamped/bud/services/user/stores/nosql"
 	"github.com/gitamped/seed/auth"
 	"github.com/gitamped/seed/server"
 	"github.com/gitamped/seed/values"
@@ -42,10 +43,11 @@ func Test_User(t *testing.T) {
 		SeedAql:        seed,
 	}
 
-	_, _, teardown := dbtest.NewUnit(t, c, "testuser", d)
+	log, db, teardown := dbtest.NewUnit(t, c, "testuser", d)
 	t.Cleanup(teardown)
+	storer := nosql.NewStore(log, db)
 
-	core := user.NewUserServicer()
+	core := user.NewUserServicer(log, storer)
 
 	t.Log("Given the need to work with User records.")
 	{

@@ -1,8 +1,11 @@
 package user
 
 import (
+	"context"
+
 	"github.com/gitamped/seed/auth"
 	"github.com/gitamped/seed/server"
+	"go.uber.org/zap"
 )
 
 // UserService is an API for creating users for an app.
@@ -25,6 +28,12 @@ type UserService interface {
 	Authenticate(AuthenticateRequest, server.GenericRequest) AuthenticateResponse
 }
 
+// Storer interface declares the behavior this package needs to perists and
+// retrieve data.
+type Storer interface {
+	Create(ctx context.Context, usr User) error
+}
+
 // Required to register endpoints with the Server
 type UserRpcService interface {
 	UserService
@@ -33,7 +42,10 @@ type UserRpcService interface {
 }
 
 // Implements interface
-type UserServicer struct{}
+type UserServicer struct {
+	log    *zap.SugaredLogger
+	storer Storer
+}
 
 // Authenticate implements UserRpcService
 func (UserServicer) Authenticate(AuthenticateRequest, server.GenericRequest) AuthenticateResponse {
@@ -61,11 +73,8 @@ func (UserServicer) DeleteUser(DeleteUserRequest, server.GenericRequest) DeleteU
 }
 
 // CreateUser implements UserRpcService
-func (UserServicer) CreateUser(req CreateUserRequest, gr server.GenericRequest) CreateUserResponse {
-	// TODO call db layer
-	u := CreateUserResponse{}
-	u.Name = "John Doe"
-	return u
+func (u UserServicer) CreateUser(req CreateUserRequest, gr server.GenericRequest) CreateUserResponse {
+	panic("uninplemented")
 }
 
 // UpdateUser implements UserRpcService
@@ -79,8 +88,11 @@ func (us UserServicer) Register(s *server.Server) {
 }
 
 // Create new UserServicer
-func NewUserServicer() UserRpcService {
-	return UserServicer{}
+func NewUserServicer(log *zap.SugaredLogger, storer Storer) UserRpcService {
+	return UserServicer{
+		log:    log,
+		storer: storer,
+	}
 }
 
 // CreateUserRequest is the request object for UserService.Greet.

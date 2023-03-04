@@ -1,4 +1,4 @@
-package db
+package nosql
 
 import (
 	"database/sql"
@@ -14,7 +14,7 @@ import (
 type dbUser struct {
 	ID           uuid.UUID      `json:"user_id"`
 	Name         string         `json:"name"`
-	Email        string         `json:"email"`
+	Email        string         `json:"_key"`
 	Roles        []string       `json:"roles"`
 	PasswordHash []byte         `json:"password_hash"`
 	Enabled      bool           `json:"enabled"`
