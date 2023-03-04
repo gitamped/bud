@@ -3,12 +3,14 @@ package user_test
 import (
 	"context"
 	"fmt"
+	"net/mail"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gitamped/bud/services/user"
+	"github.com/gitamped/bud/services/user/stores/nosql"
 	"github.com/gitamped/seed/auth"
 	"github.com/gitamped/seed/server"
 	"github.com/gitamped/seed/values"
@@ -41,10 +43,11 @@ func Test_User(t *testing.T) {
 		SeedAql:        seed,
 	}
 
-	_, _, teardown := dbtest.NewUnit(t, c, "testuser", d)
+	log, db, teardown := dbtest.NewUnit(t, c, "testuser", d)
 	t.Cleanup(teardown)
+	storer := nosql.NewStore(log, db)
 
-	core := user.NewUserServicer()
+	core := user.NewUserServicer(log, storer)
 
 	t.Log("Given the need to work with User records.")
 	{
@@ -53,20 +56,25 @@ func Test_User(t *testing.T) {
 		{
 			ctx := context.Background()
 			now := time.Date(2018, time.October, 1, 0, 0, 0, 0, time.UTC)
+			email, err := mail.ParseAddress("user@example.com")
+			if err != nil {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to parse email: %s.", dbtest.Failed, testID, err)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to parse email.", dbtest.Success, testID)
 
 			nu := user.CreateUserRequest{}
-			nu.Name = "John Doe"
-			nu.Email = "user@example.com"
-			nu.Roles = []string{auth.RoleAdmin}
-			nu.Password = "gophers"
-			nu.PasswordConfirm = "gophers"
+			nu.NewUser.Name = "John Doe"
+			nu.NewUser.Email = *email
+			nu.NewUser.Roles = []user.Role{user.RoleAdmin}
+			nu.NewUser.Password = "gophers"
+			nu.NewUser.PasswordConfirm = "gophers"
 
 			usr := core.CreateUser(nu, server.GenericRequest{
 				Ctx:    ctx,
 				Claims: auth.Claims{},
 				Values: &values.Values{Now: now},
 			})
-			if usr.Name != "John Doe" {
+			if usr.User.Name != "John Doe" {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to create user %+v : got %+v.", dbtest.Failed, testID, nu, usr)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to create user.", dbtest.Success, testID)

@@ -1,8 +1,14 @@
 package user
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/gitamped/seed/auth"
 	"github.com/gitamped/seed/server"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // UserService is an API for creating users for an app.
@@ -25,6 +31,12 @@ type UserService interface {
 	Authenticate(AuthenticateRequest, server.GenericRequest) AuthenticateResponse
 }
 
+// Storer interface declares the behavior this package needs to perists and
+// retrieve data.
+type Storer interface {
+	Create(ctx context.Context, usr User) (User, error)
+}
+
 // Required to register endpoints with the Server
 type UserRpcService interface {
 	UserService
@@ -33,7 +45,10 @@ type UserRpcService interface {
 }
 
 // Implements interface
-type UserServicer struct{}
+type UserServicer struct {
+	log    *zap.SugaredLogger
+	storer Storer
+}
 
 // Authenticate implements UserRpcService
 func (UserServicer) Authenticate(AuthenticateRequest, server.GenericRequest) AuthenticateResponse {
@@ -61,11 +76,27 @@ func (UserServicer) DeleteUser(DeleteUserRequest, server.GenericRequest) DeleteU
 }
 
 // CreateUser implements UserRpcService
-func (UserServicer) CreateUser(req CreateUserRequest, gr server.GenericRequest) CreateUserResponse {
-	// TODO call db layer
-	u := CreateUserResponse{}
-	u.Name = "John Doe"
-	return u
+func (u UserServicer) CreateUser(req CreateUserRequest, gr server.GenericRequest) CreateUserResponse {
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.NewUser.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return CreateUserResponse{Error: fmt.Errorf("generatefrompassword: %w", err).Error()}
+	}
+	usr := User{
+		ID:           uuid.New(),
+		Name:         req.NewUser.Name,
+		Email:        req.NewUser.Email,
+		PasswordHash: hash,
+		Roles:        req.NewUser.Roles,
+		Department:   req.NewUser.Department,
+		Enabled:      true,
+		DateCreated:  gr.Values.Now,
+		DateUpdated:  gr.Values.Now,
+	}
+	result, err := u.storer.Create(gr.Ctx, usr)
+	if err != nil {
+		return CreateUserResponse{Error: err.Error()}
+	}
+	return CreateUserResponse{User: result}
 }
 
 // UpdateUser implements UserRpcService
@@ -79,19 +110,23 @@ func (us UserServicer) Register(s *server.Server) {
 }
 
 // Create new UserServicer
-func NewUserServicer() UserRpcService {
-	return UserServicer{}
+func NewUserServicer(log *zap.SugaredLogger, storer Storer) UserRpcService {
+	return UserServicer{
+		log:    log,
+		storer: storer,
+	}
 }
 
 // CreateUserRequest is the request object for UserService.Greet.
 type CreateUserRequest struct {
-	NewUser
+	NewUser NewUser `json:"newUser"`
 }
 
 // CreateUserResponse is the response object containing a
 // person's greeting.
 type CreateUserResponse struct {
-	User
+	User  User   `json:"user"`
+	Error string `json:"error,omitempty"`
 }
 
 type UpdateUserRequest struct{}
