@@ -16,6 +16,8 @@ import (
 	"github.com/gitamped/seed/values"
 	"github.com/gitamped/stem/data/nosql/dbtest"
 	"github.com/gitamped/stem/docker"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 )
 
 var c *docker.Container
@@ -80,16 +82,49 @@ func Test_User(t *testing.T) {
 			t.Logf("\t%s\tTest %d:\tShould be able to create user.", dbtest.Success, testID)
 
 			uu := user.UpdateUserRequest{cuUsr.User}
+			uu.User.Name = "JD"
 			uuUsr := core.UpdateUser(uu, server.GenericRequest{
 				Ctx:    ctx,
 				Claims: auth.Claims{Roles: []string{auth.RoleAdmin}},
 				Values: &values.Values{Now: now},
 			})
 
-			if uuUsr.User.ID != cuUsr.User.ID {
+			if uuUsr.User.ID != uu.User.ID {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to update user %+v : got %+v.", dbtest.Failed, testID, uu, uuUsr)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to update user.", dbtest.Success, testID)
+
+			uuu := user.UpdateUserRequest{cuUsr.User}
+			uuu.User.Name = "JD"
+			uuuUsr := core.UpdateUser(uuu, server.GenericRequest{
+				Ctx: ctx,
+				Claims: auth.Claims{
+					RegisteredClaims: jwt.RegisteredClaims{ID: uuu.User.ID.String()},
+					Roles:            []string{auth.RoleUser},
+				},
+				Values: &values.Values{Now: now},
+			})
+
+			if uuuUsr.User.ID != uuu.User.ID {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to update user %+v : got %+v.", dbtest.Failed, testID, uuu, uuuUsr)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to update user.", dbtest.Success, testID)
+
+			iuuu := user.UpdateUserRequest{cuUsr.User}
+			iuuu.User.Name = "JD"
+			iuuuUsr := core.UpdateUser(iuuu, server.GenericRequest{
+				Ctx: ctx,
+				Claims: auth.Claims{
+					RegisteredClaims: jwt.RegisteredClaims{ID: uuid.NewString()},
+					Roles:            []string{auth.RoleUser},
+				},
+				Values: &values.Values{Now: now},
+			})
+
+			if iuuuUsr.Error != "Unauthorized action" {
+				t.Fatalf("\t%s\tTest %d:\tShould not be able to update another user profile %+v : got %+v.", dbtest.Failed, testID, iuuu, iuuuUsr)
+			}
+			t.Logf("\t%s\tTest %d:\tShould not be able to update another user profile.", dbtest.Success, testID)
 
 			du := user.DeleteUserRequest{cuUsr.User}
 			duUsr := core.DeleteUser(du, server.GenericRequest{
