@@ -94,6 +94,7 @@ func Test_User(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to update user.", dbtest.Success, testID)
 
+			// User update
 			uuu := user.UpdateUserRequest{cuUsr.User}
 			uuu.User.Name = "JD"
 			uuuUsr := core.UpdateUser(uuu, server.GenericRequest{
@@ -110,6 +111,7 @@ func Test_User(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to update user.", dbtest.Success, testID)
 
+			// invalid user update
 			iuuu := user.UpdateUserRequest{cuUsr.User}
 			iuuu.User.Name = "JD"
 			iuuuUsr := core.UpdateUser(iuuu, server.GenericRequest{
@@ -126,6 +128,7 @@ func Test_User(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould not be able to update another user profile.", dbtest.Success, testID)
 
+			// delete user
 			du := user.DeleteUserRequest{cuUsr.User}
 			duUsr := core.DeleteUser(du, server.GenericRequest{
 				Ctx:    ctx,
