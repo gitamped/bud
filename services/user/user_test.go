@@ -79,7 +79,7 @@ func Test_User(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to create user.", dbtest.Success, testID)
 
-			du := user.DeleteUserRequest{cuUsr.User.ID}
+			du := user.DeleteUserRequest{cuUsr.User}
 			duUsr := core.DeleteUser(du, server.GenericRequest{
 				Ctx:    ctx,
 				Claims: auth.Claims{},

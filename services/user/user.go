@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"net/mail"
 
 	"github.com/gitamped/seed/auth"
 	"github.com/gitamped/seed/server"
@@ -35,6 +36,7 @@ type UserService interface {
 // retrieve data.
 type Storer interface {
 	Create(ctx context.Context, usr User) (User, error)
+	Delete(ctx context.Context, email mail.Address) (User, error)
 }
 
 // Required to register endpoints with the Server
@@ -71,8 +73,12 @@ func (UserServicer) QueryUser(QueryUserRequest, server.GenericRequest) QueryUser
 }
 
 // DeleteUser implements UserRpcService
-func (UserServicer) DeleteUser(DeleteUserRequest, server.GenericRequest) DeleteUserResponse {
-	panic("unimplemented")
+func (u UserServicer) DeleteUser(req DeleteUserRequest, gr server.GenericRequest) DeleteUserResponse {
+	du, err := u.storer.Delete(gr.Ctx, req.User.Email)
+	if err != nil {
+		return DeleteUserResponse{Error: err.Error()}
+	}
+	return DeleteUserResponse{User: du}
 }
 
 // CreateUser implements UserRpcService
@@ -134,7 +140,7 @@ type UpdateUserResponse struct{}
 
 // DeleteUserRequest is the request object for UserService.DeleteUser.
 type DeleteUserRequest struct {
-	ID uuid.UUID `json:"id"`
+	User User `json:"user"`
 }
 
 // DeleteUserResponse is the response object for UserService.DeleteUser.
