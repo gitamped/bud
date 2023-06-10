@@ -68,7 +68,7 @@ func (s *Store) QueryByID(ctx context.Context, id string) (user.User, error) {
 	return toCoreUser(result), err
 }
 
-// QueryById queries a user by id.
+// QueryById queries a user by email.
 func (s *Store) QueryByEmail(ctx context.Context, id string) (user.User, error) {
 	var result dbUser
 	_, err := s.col.ReadDocument(ctx, id, &result)
