@@ -82,7 +82,7 @@ func Test_User(t *testing.T) {
 			uu := user.UpdateUserRequest{cuUsr.User}
 			uuUsr := core.UpdateUser(uu, server.GenericRequest{
 				Ctx:    ctx,
-				Claims: auth.Claims{},
+				Claims: auth.Claims{Roles: []string{auth.RoleAdmin}},
 				Values: &values.Values{Now: now},
 			})
 
