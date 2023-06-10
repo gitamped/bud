@@ -2,11 +2,14 @@ package nosql
 
 import (
 	"context"
+	"net/mail"
 
 	"github.com/arangodb/go-driver"
 	"github.com/gitamped/bud/services/user"
 	"go.uber.org/zap"
 )
+
+const collectionName = "users"
 
 type Store struct {
 	db  driver.Database
@@ -25,6 +28,14 @@ func NewStore(log *zap.SugaredLogger, db driver.Database) *Store {
 		db:  db,
 		col: col,
 	}
+}
+
+// Delete deletes a user from the database
+func (s *Store) Delete(ctx context.Context, email mail.Address) (user.User, error) {
+	var result dbUser
+	ctx = driver.WithReturnOld(ctx, &result)
+	_, err := s.col.RemoveDocument(ctx, email.Address)
+	return toCoreUser(result), err
 }
 
 // Create inserts a new user into the database.

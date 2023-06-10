@@ -43,7 +43,7 @@ func Test_User(t *testing.T) {
 		SeedAql:        seed,
 	}
 
-	log, db, teardown := dbtest.NewUnit(t, c, "testuser", d)
+	log, db, teardown := dbtest.NewUnit(t, c, "testcreateuser", d)
 	t.Cleanup(teardown)
 	storer := nosql.NewStore(log, db)
 
@@ -69,15 +69,28 @@ func Test_User(t *testing.T) {
 			nu.NewUser.Password = "gophers"
 			nu.NewUser.PasswordConfirm = "gophers"
 
-			usr := core.CreateUser(nu, server.GenericRequest{
+			cuUsr := core.CreateUser(nu, server.GenericRequest{
 				Ctx:    ctx,
 				Claims: auth.Claims{},
 				Values: &values.Values{Now: now},
 			})
-			if usr.User.Name != "John Doe" {
-				t.Fatalf("\t%s\tTest %d:\tShould be able to create user %+v : got %+v.", dbtest.Failed, testID, nu, usr)
+			if cuUsr.User.Name != "John Doe" {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to create user %+v : got %+v.", dbtest.Failed, testID, nu, cuUsr)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to create user.", dbtest.Success, testID)
+
+			du := user.DeleteUserRequest{cuUsr.User}
+			duUsr := core.DeleteUser(du, server.GenericRequest{
+				Ctx:    ctx,
+				Claims: auth.Claims{},
+				Values: &values.Values{Now: now},
+			})
+
+			if duUsr.User.ID != cuUsr.User.ID {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to delete user %+v : got %+v.", dbtest.Failed, testID, du, duUsr)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to delete user.", dbtest.Success, testID)
+
 		}
 	}
 }
