@@ -49,6 +49,28 @@ func (s *Store) Create(ctx context.Context, usr user.User) (user.User, error) {
 // QueryById queries a user by id.
 func (s *Store) QueryByID(ctx context.Context, id string) (user.User, error) {
 	var result dbUser
+	query := `FOR u IN @@coll
+	FILTER u.user_id == @id
+	LIMIT 1
+	RETURN u`
+
+	bindvars := map[string]interface{}{
+		"@coll": collectionName,
+		"id":    id,
+	}
+
+	c, err := s.db.Query(ctx, query, bindvars)
+	defer c.Close()
+	if err != nil {
+		return user.User{}, err
+	}
+	_, err = c.ReadDocument(ctx, &result)
+	return toCoreUser(result), err
+}
+
+// QueryById queries a user by id.
+func (s *Store) QueryByEmail(ctx context.Context, id string) (user.User, error) {
+	var result dbUser
 	_, err := s.col.ReadDocument(ctx, id, &result)
 	return toCoreUser(result), err
 }

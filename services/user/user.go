@@ -38,6 +38,7 @@ type Storer interface {
 	Create(ctx context.Context, usr User) (User, error)
 	Delete(ctx context.Context, email mail.Address) (User, error)
 	QueryByID(ctx context.Context, id string) (User, error)
+	QueryByEmail(ctx context.Context, email string) (User, error)
 }
 
 // Required to register endpoints with the Server
@@ -59,8 +60,12 @@ func (UserServicer) Authenticate(AuthenticateRequest, server.GenericRequest) Aut
 }
 
 // QueryUserByEmail implements UserRpcService
-func (UserServicer) QueryUserByEmail(QueryUserByEmailRequest, server.GenericRequest) QueryUserByEmailResponse {
-	panic("unimplemented")
+func (u UserServicer) QueryUserByEmail(req QueryUserByEmailRequest, gr server.GenericRequest) QueryUserByEmailResponse {
+	usr, err := u.storer.QueryByEmail(gr.Ctx, req.Email)
+	if err != nil {
+		return QueryUserByEmailResponse{Error: err.Error()}
+	}
+	return QueryUserByEmailResponse{User: usr}
 }
 
 // QueryUserByID implements UserRpcService
@@ -119,7 +124,8 @@ func (UserServicer) UpdateUser(UpdateUserRequest, server.GenericRequest) UpdateU
 func (us UserServicer) Register(s *server.Server) {
 	s.Register("UserService", "CreateUser", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.CreateUserHandler})
 	s.Register("UserService", "DeleteUser", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.DeleteUserHandler})
-	s.Register("UserService", "QueryUser", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.QueryUserByIDHandler})
+	s.Register("UserService", "QueryUserByID", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.QueryUserByIDHandler})
+	s.Register("UserService", "QueryUserByEmail", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.QueryUserByEmailHandler})
 }
 
 // Create new UserServicer
@@ -158,16 +164,27 @@ type DeleteUserResponse struct {
 type QueryUserRequest struct{}
 type QueryUserResponse struct{}
 
+// QueryUserByIDRequest is the request object for UserService.QueryUserByID.
 type QueryUserByIDRequest struct {
 	ID string `json:"id"`
 }
+
+// QueryUserByIDResponse is the response object for UserService.QueryUserByID.
 type QueryUserByIDResponse struct {
 	User  User   `json:"user"`
 	Error string `json:"error,omitempty"`
 }
 
-type QueryUserByEmailRequest struct{}
-type QueryUserByEmailResponse struct{}
+// QueryUserByEmailRequest is the request object for UserService.QueryUserByEmail.
+type QueryUserByEmailRequest struct {
+	Email string `json:"email"`
+}
+
+// QueryUserByEmailResponse is the response object for UserService.QueryUserByEmail.
+type QueryUserByEmailResponse struct {
+	User  User   `json:"user"`
+	Error string `json:"error,omitempty"`
+}
 
 type AuthenticateRequest struct{}
 type AuthenticateResponse struct{}
