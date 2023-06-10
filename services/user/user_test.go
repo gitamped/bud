@@ -79,6 +79,20 @@ func Test_User(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to create user.", dbtest.Success, testID)
 
+			// query user by id
+			qu := user.QueryUserByIDRequest{cuUsr.User.ID.String()}
+			quUsr := core.QueryUserByID(qu, server.GenericRequest{
+				Ctx:    ctx,
+				Claims: auth.Claims{},
+				Values: &values.Values{Now: now},
+			})
+
+			if quUsr.User.ID != cuUsr.User.ID && quUsr.User.Email == cuUsr.User.Email {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to query user %+v : got %+v.", dbtest.Failed, testID, qu, quUsr)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to query user.", dbtest.Success, testID)
+
+			// delete user
 			du := user.DeleteUserRequest{cuUsr.User}
 			duUsr := core.DeleteUser(du, server.GenericRequest{
 				Ctx:    ctx,
