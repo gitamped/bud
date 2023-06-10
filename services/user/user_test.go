@@ -87,10 +87,24 @@ func Test_User(t *testing.T) {
 				Values: &values.Values{Now: now},
 			})
 
-			if quUsr.User.ID != cuUsr.User.ID && quUsr.User.Email == cuUsr.User.Email {
-				t.Fatalf("\t%s\tTest %d:\tShould be able to query user %+v : got %+v.", dbtest.Failed, testID, qu, quUsr)
+			if quUsr.User.ID != cuUsr.User.ID && quUsr.User.Email != cuUsr.User.Email {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to query user by id %+v : got %+v.", dbtest.Failed, testID, qu, quUsr)
 			}
-			t.Logf("\t%s\tTest %d:\tShould be able to query user.", dbtest.Success, testID)
+			t.Logf("\t%s\tTest %d:\tShould be able to query user by id.", dbtest.Success, testID)
+
+			// query user by email
+			que := user.QueryUserByEmailRequest{Email: cuUsr.User.Email.Address}
+			queUsr := core.QueryUserByEmail(que, server.GenericRequest{
+				Ctx:    ctx,
+				Claims: auth.Claims{},
+				Values: &values.Values{Now: now},
+			})
+
+			if queUsr.User.ID != cuUsr.User.ID && queUsr.User.Email != cuUsr.User.Email {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to query user by email %+v : got %+v.", dbtest.Failed, testID, que, queUsr)
+			}
+
+			t.Logf("\t%s\tTest %d:\tShould be able to query user by email.", dbtest.Success, testID)
 
 			// delete user
 			du := user.DeleteUserRequest{cuUsr.User}
