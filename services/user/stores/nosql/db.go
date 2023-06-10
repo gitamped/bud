@@ -74,3 +74,12 @@ func (s *Store) QueryByEmail(ctx context.Context, id string) (user.User, error) 
 	_, err := s.col.ReadDocument(ctx, id, &result)
 	return toCoreUser(result), err
 }
+
+// Update updates a user by data.
+func (s *Store) Update(ctx context.Context, updateUser user.UpdateUser) (user.User, error) {
+	var result dbUser
+	ctx = driver.WithReturnNew(ctx, &result)
+	ctx = driver.WithKeepNull(ctx, false)
+	_, err := s.col.UpdateDocument(ctx, updateUser.Email.Address, updateUser)
+	return toCoreUser(result), err
+}
