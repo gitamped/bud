@@ -28,8 +28,11 @@ func NewStore(log *zap.SugaredLogger, db driver.Database) *Store {
 }
 
 // Delete deletes a user from the database
-func Delete(ctx context.Context, uuid string) error {
-	panic("unimplemented")
+func (s *Store) Delete(ctx context.Context, uuid string) (user.User, error) {
+	var result dbUser
+	ctx = driver.WithReturnOld(ctx, &result)
+	_, err := s.col.RemoveDocument(ctx, uuid)
+	return toCoreUser(result), err
 }
 
 // Create inserts a new user into the database.
