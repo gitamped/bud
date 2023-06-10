@@ -79,6 +79,18 @@ func Test_User(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to create user.", dbtest.Success, testID)
 
+			uu := user.UpdateUserRequest{cuUsr.User}
+			uuUsr := core.UpdateUser(uu, server.GenericRequest{
+				Ctx:    ctx,
+				Claims: auth.Claims{},
+				Values: &values.Values{Now: now},
+			})
+
+			if uuUsr.User.ID != cuUsr.User.ID {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to update user %+v : got %+v.", dbtest.Failed, testID, uu, uuUsr)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to update user.", dbtest.Success, testID)
+
 			du := user.DeleteUserRequest{cuUsr.User}
 			duUsr := core.DeleteUser(du, server.GenericRequest{
 				Ctx:    ctx,

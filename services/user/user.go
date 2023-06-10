@@ -37,6 +37,7 @@ type UserService interface {
 type Storer interface {
 	Create(ctx context.Context, usr User) (User, error)
 	Delete(ctx context.Context, email mail.Address) (User, error)
+	Update(ctx context.Context, usr User) (User, error)
 }
 
 // Required to register endpoints with the Server
@@ -106,14 +107,23 @@ func (u UserServicer) CreateUser(req CreateUserRequest, gr server.GenericRequest
 }
 
 // UpdateUser implements UserRpcService
-func (UserServicer) UpdateUser(UpdateUserRequest, server.GenericRequest) UpdateUserResponse {
-	panic("unimplemented")
+func (u UserServicer) UpdateUser(req UpdateUserRequest, gr server.GenericRequest) UpdateUserResponse {
+	if !(gr.Claims.Authorized(RoleAdmin.name) || req.User.ID.String() == gr.Claims.ID) {
+		return UpdateUserResponse{Error: fmt.Errorf("Unauthorized action").Error()}
+	}
+	uu, err := u.storer.Update(gr.Ctx, req.User)
+	if err != nil {
+		return UpdateUserResponse{Error: err.Error()}
+	}
+	return UpdateUserResponse{User: uu}
+
 }
 
 // Register implements UserRpcService
 func (us UserServicer) Register(s *server.Server) {
 	s.Register("UserService", "CreateUser", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.CreateUserHandler})
 	s.Register("UserService", "DeleteUser", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.DeleteUserHandler})
+	s.Register("UserService", "UpdateUser", server.RPCEndpoint{Roles: []string{auth.RoleAdmin, auth.RoleUser}, Handler: us.UpdateUserHandler})
 }
 
 // Create new UserServicer
@@ -135,8 +145,16 @@ type CreateUserResponse struct {
 	Error string `json:"error,omitempty"`
 }
 
-type UpdateUserRequest struct{}
-type UpdateUserResponse struct{}
+// UpdateUserRequest is the request object for UserService.UpdateUser.
+type UpdateUserRequest struct {
+	User User `json:"user"`
+}
+
+// UpdaetUserResponse is the response object for UserService.UpdaetUser.
+type UpdateUserResponse struct {
+	User  User   `json:"user"`
+	Error string `json:"error,omitempty"`
+}
 
 // DeleteUserRequest is the request object for UserService.DeleteUser.
 type DeleteUserRequest struct {

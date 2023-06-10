@@ -30,6 +30,14 @@ func NewStore(log *zap.SugaredLogger, db driver.Database) *Store {
 	}
 }
 
+// Create inserts a new user into the database.
+func (s *Store) Create(ctx context.Context, usr user.User) (user.User, error) {
+	var result dbUser
+	ctx = driver.WithReturnNew(ctx, &result)
+	_, err := s.col.CreateDocument(ctx, toDBUser(usr))
+	return toCoreUser(result), err
+}
+
 // Delete deletes a user from the database
 func (s *Store) Delete(ctx context.Context, email mail.Address) (user.User, error) {
 	var result dbUser
@@ -38,10 +46,10 @@ func (s *Store) Delete(ctx context.Context, email mail.Address) (user.User, erro
 	return toCoreUser(result), err
 }
 
-// Create inserts a new user into the database.
-func (s *Store) Create(ctx context.Context, usr user.User) (user.User, error) {
+// Update updates a user in the database.
+func (s *Store) Update(ctx context.Context, usr user.User) (user.User, error) {
 	var result dbUser
 	ctx = driver.WithReturnNew(ctx, &result)
-	_, err := s.col.CreateDocument(ctx, toDBUser(usr))
+	_, err := s.col.UpdateDocument(ctx, usr.Email.Address, toDBUser(usr))
 	return toCoreUser(result), err
 }
