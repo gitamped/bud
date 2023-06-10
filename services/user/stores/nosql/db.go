@@ -2,14 +2,23 @@ package nosql
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/mail"
 
 	"github.com/arangodb/go-driver"
 	"github.com/gitamped/bud/services/user"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const collectionName = "users"
+
+var (
+	ErrNotFound              = errors.New("user not found")
+	ErrUniqueEmail           = errors.New("email is not unique")
+	ErrAuthenticationFailure = errors.New("authentication failed")
+)
 
 type Store struct {
 	db  driver.Database
@@ -69,9 +78,9 @@ func (s *Store) QueryByID(ctx context.Context, id string) (user.User, error) {
 }
 
 // QueryById queries a user by email.
-func (s *Store) QueryByEmail(ctx context.Context, id string) (user.User, error) {
+func (s *Store) QueryByEmail(ctx context.Context, email string) (user.User, error) {
 	var result dbUser
-	_, err := s.col.ReadDocument(ctx, id, &result)
+	_, err := s.col.ReadDocument(ctx, email, &result)
 	return toCoreUser(result), err
 }
 
@@ -82,4 +91,18 @@ func (s *Store) Update(ctx context.Context, updateUser user.UpdateUser) (user.Us
 	ctx = driver.WithKeepNull(ctx, false)
 	_, err := s.col.UpdateDocument(ctx, updateUser.Email.Address, updateUser)
 	return toCoreUser(result), err
+
+}
+
+func (s *Store) Authenticate(ctx context.Context, email string, password string) (user.User, error) {
+	usr, err := s.QueryByEmail(ctx, email)
+	if err != nil {
+		return user.User{}, fmt.Errorf("query: email[%s]: %w", email, err)
+	}
+
+	if err := bcrypt.CompareHashAndPassword(usr.PasswordHash, []byte(password)); err != nil {
+		return user.User{}, fmt.Errorf("comparehashandpassword: %w", ErrAuthenticationFailure)
+	}
+
+	return usr, nil
 }

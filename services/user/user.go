@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/mail"
+	"time"
 
 	"github.com/gitamped/seed/auth"
 	"github.com/gitamped/seed/server"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -40,6 +42,7 @@ type Storer interface {
 	QueryByID(ctx context.Context, id string) (User, error)
 	QueryByEmail(ctx context.Context, email string) (User, error)
 	Update(ctx context.Context, usr UpdateUser) (User, error)
+	Authenticate(ctx context.Context, email string, password string) (User, error)
 }
 
 // Required to register endpoints with the Server
@@ -53,11 +56,46 @@ type UserRpcService interface {
 type UserServicer struct {
 	log    *zap.SugaredLogger
 	storer Storer
+	auth   auth.Auth
 }
 
 // Authenticate implements UserRpcService
-func (UserServicer) Authenticate(AuthenticateRequest, server.GenericRequest) AuthenticateResponse {
-	panic("unimplemented")
+func (u UserServicer) Authenticate(req AuthenticateRequest, gr server.GenericRequest) AuthenticateResponse {
+
+	addr, err := mail.ParseAddress(req.Username)
+	if err != nil {
+		return AuthenticateResponse{Error: fmt.Errorf("invalid email format").Error()}
+
+	}
+
+	usr, err := u.storer.Authenticate(gr.Ctx, *&addr.Address, req.Password)
+	if err != nil {
+		return AuthenticateResponse{Error: err.Error()}
+	}
+
+	// flatten roles
+	roles := make([]string, 0, len(usr.Roles))
+	for _, value := range usr.Roles {
+		roles = append(roles, value.name)
+	}
+
+	claims := auth.Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   usr.ID.String(),
+			Issuer:    "bud project",
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+		},
+		Roles: roles,
+	}
+
+	tkn, err := u.auth.GenerateToken(claims)
+	if err != nil {
+		return AuthenticateResponse{Error: fmt.Errorf("generatetoken: %w", err).Error()}
+
+	}
+
+	return AuthenticateResponse{Token: tkn}
 }
 
 // QueryUserByEmail implements UserRpcService
@@ -135,10 +173,11 @@ func (us UserServicer) Register(s *server.Server) {
 }
 
 // Create new UserServicer
-func NewUserServicer(log *zap.SugaredLogger, storer Storer) UserRpcService {
+func NewUserServicer(log *zap.SugaredLogger, storer Storer, a auth.Auth) UserRpcService {
 	return UserServicer{
 		log:    log,
 		storer: storer,
+		auth:   a,
 	}
 }
 
@@ -197,5 +236,12 @@ type QueryUserByEmailResponse struct {
 	Error string `json:"error,omitempty"`
 }
 
-type AuthenticateRequest struct{}
-type AuthenticateResponse struct{}
+type AuthenticateRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type AuthenticateResponse struct {
+	Token string `json:"token"`
+	Error string `json:"error,omitempty"`
+}
