@@ -106,6 +106,24 @@ func Test_User(t *testing.T) {
 
 			t.Logf("\t%s\tTest %d:\tShould be able to query user by email.", dbtest.Success, testID)
 
+			// update user
+			var updateName string = "updated user name"
+			uusr := user.UpdateUser{
+				Email: &cuUsr.User.Email,
+				Name:  &updateName,
+			}
+			uu := user.UpdateUserRequest{uusr}
+			uuUsr := core.UpdateUser(uu, server.GenericRequest{
+				Ctx:    ctx,
+				Claims: auth.Claims{Roles: []string{auth.RoleAdmin}},
+				Values: &values.Values{Now: now},
+			})
+
+			if uuUsr.User.Email.Address != uu.UpdateUser.Email.Address || uuUsr.User.ID != cuUsr.User.ID {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to update user %+v : got %+v.", dbtest.Failed, testID, uu, uuUsr)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to update user.", dbtest.Success, testID)
+
 			// delete user
 			du := user.DeleteUserRequest{cuUsr.User}
 			duUsr := core.DeleteUser(du, server.GenericRequest{

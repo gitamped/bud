@@ -39,6 +39,7 @@ type Storer interface {
 	Delete(ctx context.Context, email mail.Address) (User, error)
 	QueryByID(ctx context.Context, id string) (User, error)
 	QueryByEmail(ctx context.Context, email string) (User, error)
+	Update(ctx context.Context, usr UpdateUser) (User, error)
 }
 
 // Required to register endpoints with the Server
@@ -116,8 +117,12 @@ func (u UserServicer) CreateUser(req CreateUserRequest, gr server.GenericRequest
 }
 
 // UpdateUser implements UserRpcService
-func (UserServicer) UpdateUser(UpdateUserRequest, server.GenericRequest) UpdateUserResponse {
-	panic("unimplemented")
+func (u UserServicer) UpdateUser(req UpdateUserRequest, gr server.GenericRequest) UpdateUserResponse {
+	uu, err := u.storer.Update(gr.Ctx, req.UpdateUser)
+	if err != nil {
+		return UpdateUserResponse{Error: err.Error()}
+	}
+	return UpdateUserResponse{User: uu}
 }
 
 // Register implements UserRpcService
@@ -126,6 +131,7 @@ func (us UserServicer) Register(s *server.Server) {
 	s.Register("UserService", "DeleteUser", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.DeleteUserHandler})
 	s.Register("UserService", "QueryUserByID", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.QueryUserByIDHandler})
 	s.Register("UserService", "QueryUserByEmail", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.QueryUserByEmailHandler})
+	s.Register("UserService", "UpdateUser", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.UpdateUserHandler})
 }
 
 // Create new UserServicer
@@ -147,8 +153,13 @@ type CreateUserResponse struct {
 	Error string `json:"error,omitempty"`
 }
 
-type UpdateUserRequest struct{}
-type UpdateUserResponse struct{}
+type UpdateUserRequest struct {
+	UpdateUser UpdateUser `json:"user"`
+}
+type UpdateUserResponse struct {
+	User  User   `json:"user"`
+	Error string `json:"error,omitempty"`
+}
 
 // DeleteUserRequest is the request object for UserService.DeleteUser.
 type DeleteUserRequest struct {
