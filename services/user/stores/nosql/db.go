@@ -45,3 +45,10 @@ func (s *Store) Create(ctx context.Context, usr user.User) (user.User, error) {
 	_, err := s.col.CreateDocument(ctx, toDBUser(usr))
 	return toCoreUser(result), err
 }
+
+// QueryById queries a user by id.
+func (s *Store) QueryByID(ctx context.Context, id string) (user.User, error) {
+	var result dbUser
+	_, err := s.col.ReadDocument(ctx, id, &result)
+	return toCoreUser(result), err
+}
