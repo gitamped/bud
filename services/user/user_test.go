@@ -43,11 +43,15 @@ func Test_User(t *testing.T) {
 		SeedAql:        seed,
 	}
 
-	log, db, teardown := dbtest.NewUnit(t, c, "testcreateuser", d)
+	test := dbtest.NewIntegration(t, c, "testuser", d)
+	log := test.Log
+	db := test.DB
+	teardown := test.Teardown
+	authSvc := test.Auth
 	t.Cleanup(teardown)
 	storer := nosql.NewStore(log, db)
 
-	core := user.NewUserServicer(log, storer)
+	core := user.NewUserServicer(log, storer, *authSvc)
 
 	t.Log("Given the need to work with User records.")
 	{
@@ -123,6 +127,40 @@ func Test_User(t *testing.T) {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to update user %+v : got %+v.", dbtest.Failed, testID, uu, uuUsr)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to update user.", dbtest.Success, testID)
+
+			// authenticat user
+			au := user.AuthenticateRequest{
+				Username: email.Address,
+				Password: "gophers",
+			}
+
+			auUsr := core.Authenticate(au, server.GenericRequest{
+				Ctx:    ctx,
+				Claims: auth.Claims{},
+				Values: &values.Values{Now: now},
+			})
+
+			if len(auUsr.Token) == 0 {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to authenticate user %+v : got %+v.", dbtest.Failed, testID, au, auUsr)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to authenticate user.", dbtest.Success, testID)
+
+			// authenticat user
+			auf := user.AuthenticateRequest{
+				Username: email.Address,
+				Password: "wrong password",
+			}
+
+			aufUsr := core.Authenticate(auf, server.GenericRequest{
+				Ctx:    ctx,
+				Claims: auth.Claims{},
+				Values: &values.Values{Now: now},
+			})
+
+			if aufUsr.Error != "comparehashandpassword: authentication failed" {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to forbid failed authenticated user %+v : got %+v.", dbtest.Failed, testID, auf, aufUsr)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to forbid failed authenticated user.", dbtest.Success, testID)
 
 			// delete user
 			du := user.DeleteUserRequest{cuUsr.User}
