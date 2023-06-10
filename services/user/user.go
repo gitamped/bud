@@ -170,7 +170,7 @@ func (us UserServicer) Register(s *server.Server) {
 	s.Register("UserService", "QueryUserByID", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.QueryUserByIDHandler})
 	s.Register("UserService", "QueryUserByEmail", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.QueryUserByEmailHandler})
 	s.Register("UserService", "UpdateUser", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.UpdateUserHandler})
-	s.Register("UserService", "Authenticate", server.RPCEndpoint{Roles: []string{auth.RoleAdmin}, Handler: us.AuthenticateHandler})
+	s.Register("UserService", "Authenticate", server.RPCEndpoint{Roles: []string{}, Handler: us.AuthenticateHandler})
 }
 
 // Create new UserServicer
